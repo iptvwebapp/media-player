@@ -27,6 +27,9 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.trackselection.AdaptiveTrackSelection;
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector;
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter;
+import androidx.media3.datasource.DefaultDataSource;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSession.ControllerInfo;
 import androidx.media3.session.MediaSessionService;
@@ -133,8 +136,16 @@ public class MediaPlayerService extends MediaSessionService implements Lifecycle
         // renderers when available but still fall back to extensions for unsupported formats.
         // EXTENSION_RENDERER_MODE_ON gives priority to extension renderers.
 
+        // Create HTTP data source factory with redirect support
+        DefaultHttpDataSource.Factory httpDataSourceFactory = new DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setUserAgent("ExoPlayer-MediaPlayer");
+        
+        DefaultDataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(this, httpDataSourceFactory);
+
         ExoPlayer exoPlayer = new ExoPlayer.Builder(this)
             .setRenderersFactory(renderersFactory)
+            .setMediaSourceFactory(new DefaultMediaSourceFactory(this).setDataSourceFactory(dataSourceFactory))
             .setName(playerId)
             .setTrackSelector(new DefaultTrackSelector(this, new AdaptiveTrackSelection.Factory()))
             .setLoadControl(new DefaultLoadControl())
